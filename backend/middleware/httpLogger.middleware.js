@@ -15,14 +15,12 @@ const httpLogger = (req, res, next) => {
   res.end = function (chunk) {
     if (chunk) chunks.push(new Buffer.from(chunk));
 
-    let body = Buffer.concat(chunks).toString("utf8");
-
-    if (body) body = JSON.parse(body);
+    // let body = Buffer.concat(chunks).toString("utf8");
+    let body = JSON.parse(Buffer.concat(chunks));
 
     oldEnd.apply(res, arguments);
-    console.log(req.headers);
     logger.http(
-      `\t HTTP:: [ ${req.method}: [${req.path} ] - (${res.statusCode})`,
+      `HTTP:: ${req.method}: ['${req.originalUrl}'] - (${res.statusCode})`,
       {
         fromIP: req.headers["x-forwarded-for"] || req.connection.remoteAddress,
         contentType: req.headers["content-type"],

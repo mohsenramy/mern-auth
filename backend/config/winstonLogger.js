@@ -5,32 +5,70 @@ import util from "util";
 import { URL } from "url";
 import path from "path";
 
-const { createLogger, format, transports } = winston;
+const { createLogger, format, transports, addColors } = winston;
 
 const fileNames = {
   ERRORS: path.join("./", "backend", "logs", "%DATE%-errors.log"),
   ALL: path.join("./", "backend", "logs", "%DATE%-allLogs.log"),
 };
 // All options shared between transports
-const fileDailyRotateCommonOptions = {
+const fileDailyRotateConfig = {
   datePattern: "YYYYMMDD",
   maxSize: "1m",
   level: "error",
   handleExceptions: true,
   handleRejections: true,
 };
+// Define your severity levels.
+// With them, You can create log files,
+// see or hide levels based on the running ENV.
+const levels = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  http: 3,
+  debug: 4,
+};
+
+// This method set the current severity based on
+// the current NODE_ENV: show all the log levels
+// if the server was run in development mode; otherwise,
+// if it was run in production, show only warn and error messages.
+const level = () => {
+  const env = process.env.NODE_ENV || "development";
+  const isDevelopment = env === "development";
+  console.log(
+    "🚀 ~ file: winstonLogger.js:40 ~ level ~ isDevelopment:",
+    isDevelopment
+  );
+  return isDevelopment ? "debug" : "info";
+};
+
+// Define different colors for each level.
+// Colors make the log message more visible,
+// adding the ability to focus or ignore messages.
+const colors = {
+  error: "red",
+  warn: "yellow",
+  info: "green",
+  http: "magenta",
+  debug: "white",
+};
+
+addColors(colors);
 
 const errorsTransport = new transports.DailyRotateFile({
-  ...fileDailyRotateCommonOptions,
+  ...fileDailyRotateConfig,
   filename: fileNames.ERRORS,
 });
 const combinedTransport = new transports.DailyRotateFile({
-  ...fileDailyRotateCommonOptions,
+  ...fileDailyRotateConfig,
   filename: fileNames.ALL,
 });
 
 const logger = createLogger({
-  level: process.env.NODE_ENV !== "production" ? "debug" : "info",
+  levels,
+  level: level(), //: process.env.NODE_ENV !== "production" ? "debug" : "info",
   format: format.combine(
     // format.colorize(),
     format.timestamp({
